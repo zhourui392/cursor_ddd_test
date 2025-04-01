@@ -1,0 +1,10 @@
+---
+description: 生成plantUML的要求
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- 生成一个主要流程图和一个详细的流程图。
+- 主要流程图中讲一些不重要的处理忽略，例如直接获取数据。
