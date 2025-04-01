@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.demo.infrastructure.mapper.UserMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.demo.infrastructure.persistence.entity.UserDO">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="email" property="email"/>
+        <result column="phone" property="phone"/>
+        <result column="nick_name" property="nickName"/>
+        <result column="avatar" property="avatar"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 所有字段 -->
+    <sql id="Base_Column_List">
+        id, username, password, email, phone, nick_name, avatar, status, create_time, update_time
+    </sql>
+    
+    <!-- 可以在这里添加更复杂的自定义SQL查询 -->
+    <select id="findUserWithRoles" resultMap="BaseResultMap">
+        SELECT u.*
+        FROM user u
+        WHERE u.id = #{userId}
+    </select>
+</mapper> 

@@ -1,0 +1,38 @@
+@startuml RBAC主要流程图
+
+actor 用户 as User
+participant "前端应用" as Frontend
+participant "后端服务" as Backend
+participant "数据库" as Database
+
+== 用户认证流程 ==
+
+User -> Frontend: 输入用户名和密码
+Frontend -> Backend: 发送登录请求
+Backend -> Database: 查询用户信息
+Database --> Backend: 返回用户信息
+Backend -> Backend: 验证密码
+Backend -> Backend: 生成JWT令牌
+Backend --> Frontend: 返回JWT令牌和用户信息
+Frontend -> Frontend: 保存令牌和用户信息
+Frontend --> User: 显示登录成功
+
+== 访问受保护资源 ==
+
+User -> Frontend: 请求访问资源
+Frontend -> Frontend: 添加JWT令牌到请求头
+Frontend -> Backend: 发送资源请求
+Backend -> Backend: 验证JWT令牌
+Backend -> Backend: 提取用户信息
+Backend -> Backend: 检查用户权限
+alt 有权限访问
+    Backend -> Database: 查询资源数据
+    Database --> Backend: 返回资源数据
+    Backend --> Frontend: 返回资源数据
+    Frontend --> User: 显示资源
+else 无权限访问
+    Backend --> Frontend: 返回403(拒绝访问)
+    Frontend --> User: 显示无权限提示
+end
+
+@enduml 

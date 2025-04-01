@@ -1,0 +1,138 @@
+# Java项目忽略规则
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# 日志文件
+*.log
+logs/
+
+# IDE相关文件
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+# 前端项目忽略规则
+# 依赖
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+
+# 测试覆盖报告
+frontend/coverage
+
+# 生产构建目录
+frontend/dist
+frontend/build
+
+# 前端缓存
+frontend/.cache/
+frontend/.parcel-cache/
+frontend/.temp/
+frontend/.nuxt/
+.nuxt/
+.next/
+dist/
+.cache/
+.output/
+
+# Element Plus自动导入
+frontend/auto-imports.d.ts
+frontend/components.d.ts
+
+# 环境变量文件
+.env
+.env.*
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# 包管理器日志
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+h2db/
+*.mv.db
+*.trace.db
+
+# 本地配置文件
+application-local.yml
+application-local.properties
+application-dev.yml
+application-dev.properties
+
+# 敏感配置文件
+**/application-secret.yml
+**/application-secret.properties
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+
+# 临时文件
+*.tmp
+*.swp
+*.swo
+*.bak
+*.orig
+*~
+.temp/
+tmp/
+
+# 二进制文件
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Cursor编辑器临时文件
+.cursor/
+
+# Docker相关
+docker-compose.override.yml
+
+# 杂项
+.flattened-pom.xml
+HELP.md 

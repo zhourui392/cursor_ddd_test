@@ -1,0 +1,145 @@
+@startuml RBAC模型类图
+
+' 实体类
+class User {
+    - Long id
+    - String username
+    - String password
+    - String nickname
+    - String email
+    - String phone
+    - Boolean status
+    - LocalDateTime createTime
+    - LocalDateTime updateTime
+    - LocalDateTime lastLoginTime
+    - Set<Role> roles
+    + prePersist()
+    + preUpdate()
+}
+
+class Role {
+    - Long id
+    - String name
+    - String code
+    - String description
+    - Boolean status
+    - LocalDateTime createTime
+    - LocalDateTime updateTime
+    - Set<User> users
+    - Set<Permission> permissions
+    + prePersist()
+    + preUpdate()
+}
+
+class Permission {
+    - Long id
+    - String name
+    - String code
+    - String description
+    - Integer type
+    - Long parentId
+    - String path
+    - Integer sort
+    - String icon
+    - Boolean status
+    - LocalDateTime createTime
+    - LocalDateTime updateTime
+    - Set<Role> roles
+    + prePersist()
+    + preUpdate()
+}
+
+' 仓库接口
+interface UserRepository {
+    + Optional<User> findByUsername(String username)
+    + boolean existsByUsername(String username)
+    + Optional<User> findByEmail(String email)
+    + Optional<User> findByPhone(String phone)
+}
+
+interface RoleRepository {
+    + Optional<Role> findByName(String name)
+    + Optional<Role> findByCode(String code)
+    + boolean existsByCode(String code)
+}
+
+interface PermissionRepository {
+    + Optional<Permission> findByCode(String code)
+    + List<Permission> findByType(Integer type)
+    + List<Permission> findByParentId(Long parentId)
+    + boolean existsByCode(String code)
+}
+
+' 安全相关类
+class UserDetailsServiceImpl {
+    - UserRepository userRepository
+    + UserDetails loadUserByUsername(String username)
+}
+
+class JwtUtil {
+    - String secret
+    - Long expiration
+    - Key getSigningKey()
+    + String extractUsername(String token)
+    + Date extractExpiration(String token)
+    + <T> T extractClaim(String token, Function<Claims, T> claimsResolver)
+    - Claims extractAllClaims(String token)
+    - Boolean isTokenExpired(String token)
+    + String generateToken(UserDetails userDetails)
+    - String createToken(Map<String, Object> claims, String subject)
+    + Boolean validateToken(String token, UserDetails userDetails)
+}
+
+class JwtAuthenticationFilter {
+    - UserDetailsServiceImpl userDetailsService
+    - JwtUtil jwtUtil
+    # void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+}
+
+class SecurityConfig {
+    - UserDetailsServiceImpl userDetailsService
+    - JwtAuthenticationFilter jwtAuthenticationFilter
+    # void configure(AuthenticationManagerBuilder auth)
+    + AuthenticationManager authenticationManagerBean()
+    + PasswordEncoder passwordEncoder()
+    # void configure(HttpSecurity http)
+}
+
+' DTO类
+class JwtResponse {
+    - String token
+    - String type
+    - Long id
+    - String username
+    - String email
+    - List<String> roles
+    + JwtResponse(String token, Long id, String username, String email, List<String> roles)
+}
+
+class LoginRequest {
+    - String username
+    - String password
+}
+
+class RegisterRequest {
+    - String username
+    - String password
+    - String nickname
+    - String email
+    - String phone
+    - Set<String> roles
+}
+
+' 关系定义
+User "1" -- "n" Role : 拥有多个角色 >
+Role "1" -- "n" Permission : 拥有多个权限 >
+UserRepository ..> User : 管理 >
+RoleRepository ..> Role : 管理 >
+PermissionRepository ..> Permission : 管理 >
+UserDetailsServiceImpl ..> UserRepository : 使用 >
+JwtAuthenticationFilter ..> UserDetailsServiceImpl : 使用 >
+JwtAuthenticationFilter ..> JwtUtil : 使用 >
+SecurityConfig ..> UserDetailsServiceImpl : 使用 >
+SecurityConfig ..> JwtAuthenticationFilter : 使用 >
+
+@enduml 

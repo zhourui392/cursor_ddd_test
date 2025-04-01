@@ -1,0 +1,157 @@
+@startuml DDD架构
+
+' DDD架构总览
+package "接口层(Interfaces)" {
+  package "dto" {
+    class ApiResponse
+  }
+  
+  package "rest" {
+    class UserController
+    class AuthController
+  }
+  
+  package "advice" {
+    class GlobalExceptionHandler
+  }
+}
+
+package "应用层(Application)" {
+  package "dto" {
+    class UserDTO
+    class RoleDTO
+    class PermissionDTO
+  }
+  
+  package "command" {
+    class RegisterUserCommand
+    class LoginCommand
+    class UpdateUserCommand
+  }
+  
+  package "service" {
+    interface UserApplicationService
+    class UserApplicationServiceImpl
+  }
+}
+
+package "领域层(Domain)" {
+  package "model.entity" {
+    class User
+    class Role
+    class Permission
+  }
+  
+  package "model.valueobject" {
+    class UserId
+    class RoleId
+    class PermissionId
+    class Email
+    class Phone
+  }
+  
+  package "repository" {
+    interface UserRepository
+    interface RoleRepository
+    interface PermissionRepository
+  }
+  
+  package "service" {
+    interface PasswordService
+  }
+}
+
+package "基础设施层(Infrastructure)" {
+  package "config" {
+    class SecurityConfig
+  }
+  
+  package "security" {
+    class JwtUtil
+    class JwtAuthenticationFilter
+    class UserDetailsServiceImpl
+  }
+  
+  package "repository" {
+    interface UserJpaRepository
+    interface RoleJpaRepository
+    interface PermissionJpaRepository
+    class UserRepositoryImpl
+    class RoleRepositoryImpl
+    class PermissionRepositoryImpl
+  }
+  
+  package "service" {
+    class PasswordServiceImpl
+  }
+  
+  package "persistence.entity" {
+    class UserDO
+    class RoleDO
+    class PermissionDO
+  }
+  
+  package "mapper" {
+    interface UserMapper
+    interface RoleMapper
+    interface PermissionMapper
+  }
+}
+
+' 接口层关系
+UserController --> UserApplicationService
+AuthController --> UserApplicationService
+GlobalExceptionHandler --> ApiResponse
+
+' 应用层关系
+UserApplicationServiceImpl ..|> UserApplicationService
+UserApplicationServiceImpl --> UserRepository
+UserApplicationServiceImpl --> RoleRepository
+UserApplicationServiceImpl --> PasswordService
+UserApplicationServiceImpl --> UserMapper
+UserApplicationServiceImpl --> JwtUtil
+
+' 领域层关系
+User --> UserId
+User --> Email
+User --> Phone
+User "1" *--> "n" Role
+Role --> RoleId
+Role "1" *--> "n" Permission
+Permission --> PermissionId
+
+' 基础设施层关系
+UserRepositoryImpl ..|> UserRepository
+UserRepositoryImpl --> UserJpaRepository
+UserRepositoryImpl --> UserMapper
+RoleRepositoryImpl ..|> RoleRepository
+RoleRepositoryImpl --> RoleJpaRepository
+RoleRepositoryImpl --> RoleMapper
+PermissionRepositoryImpl ..|> PermissionRepository
+PermissionRepositoryImpl --> PermissionJpaRepository
+PermissionRepositoryImpl --> PermissionMapper
+
+PasswordServiceImpl ..|> PasswordService
+
+UserJpaRepository --> UserDO
+RoleJpaRepository --> RoleDO
+PermissionJpaRepository --> PermissionDO
+
+UserDO "1" *--> "n" RoleDO
+RoleDO "1" *--> "n" PermissionDO
+
+UserMapper --> User
+UserMapper --> UserDO
+RoleMapper --> Role
+RoleMapper --> RoleDO
+PermissionMapper --> Permission
+PermissionMapper --> PermissionDO
+
+SecurityConfig --> UserDetailsService
+SecurityConfig --> JwtAuthenticationFilter
+JwtAuthenticationFilter --> JwtUtil
+JwtAuthenticationFilter --> UserDetailsService
+UserDetailsServiceImpl ..|> UserDetailsService
+UserDetailsServiceImpl --> UserRepository
+
+@enduml 

@@ -1,0 +1,176 @@
+package com.example.demo.facade.rest;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.application.command.UpdateUserCommand;
+import com.example.demo.application.dto.PermissionDTO;
+import com.example.demo.application.dto.RoleDTO;
+import com.example.demo.application.dto.UserDTO;
+import com.example.demo.application.service.UserApplicationService;
+import com.example.demo.facade.dto.ApiResponse;
+import com.example.demo.infrastructure.utils.SecurityUtils;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+/**
+ * 用户控制器
+ */
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+    
+    private final UserApplicationService userApplicationService;
+    
+    /**
+     * 获取所有用户
+     */
+    @GetMapping
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+        List<UserDTO> users = userApplicationService.getAllUsers();
+        return ResponseEntity.ok(ApiResponse.success(users));
+    }
+    
+    /**
+     * 获取当前登录用户信息（包含角色和权限）
+     */
+    @GetMapping("/current")
+    public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser() {
+        String username = SecurityUtils.getCurrentUsername();
+        if (username == null) {
+            return ResponseEntity.ok(ApiResponse.error("用户未登录"));
+        }
+        
+        // 获取用户信息（包含角色和权限）
+        UserDTO user = userApplicationService.getUserByUsername(username);
+        
+        // 添加调试信息：检查角色和权限是否正确加载
+        if (user.getRoles() != null) {
+            // 确保每个角色的权限都已加载
+            Set<RoleDTO> roles = user.getRoles();
+            
+            // 提取所有权限代码，用于前端权限控制
+            Set<String> permissionCodes = roles.stream()
+                .filter(role -> role.getPermissions() != null)
+                .flatMap(role -> role.getPermissions().stream())
+                .map(PermissionDTO::getCode)
+                .collect(Collectors.toSet());
+            
+            // 输出用户角色和权限信息到日志（实际生产中可移除）
+            System.out.println("User: " + username + ", Roles: " + 
+                roles.stream().map(RoleDTO::getCode).collect(Collectors.joining(", ")) + 
+                ", Permissions: " + String.join(", ", permissionCodes));
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+    
+    /**
+     * 获取当前登录用户的角色和权限
+     */
+    @GetMapping("/current/permissions")
+    public ResponseEntity<ApiResponse<Object>> getCurrentUserPermissions() {
+        String username = SecurityUtils.getCurrentUsername();
+        if (username == null) {
+            return ResponseEntity.ok(ApiResponse.error("用户未登录"));
+        }
+        
+        // 获取用户信息（包含角色和权限）
+        UserDTO user = userApplicationService.getUserByUsername(username);
+        
+        // 构建角色和权限的响应结构
+        if (user.getRoles() != null) {
+            Set<RoleDTO> roles = user.getRoles();
+            
+            // 提取所有权限代码，用于前端权限控制
+            Set<String> permissionCodes = roles.stream()
+                .filter(role -> role.getPermissions() != null)
+                .flatMap(role -> role.getPermissions().stream())
+                .map(PermissionDTO::getCode)
+                .collect(Collectors.toSet());
+            
+            // 构建包含角色和权限的响应对象
+            var result = new HashMap<String, Object>();
+            result.put("roles", roles.stream().map(RoleDTO::getCode).collect(Collectors.toList()));
+            result.put("permissions", permissionCodes);
+            
+            return ResponseEntity.ok(ApiResponse.success(result));
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success(Map.of("roles", List.of(), "permissions", List.of())));
+    }
+    
+    /**
+     * 根据ID获取用户
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+        UserDTO user = userApplicationService.getUserById(id);
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+    
+    /**
+     * 更新用户信息
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER_EDIT')")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(
+            @PathVariable Long id, 
+            @Valid @RequestBody UpdateUserCommand command) {
+        command.setId(id);
+        UserDTO updatedUser = userApplicationService.updateUser(command);
+        return ResponseEntity.ok(ApiResponse.success(updatedUser));
+    }
+    
+    /**
+     * 删除用户
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER_DELETE')")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userApplicationService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "用户已删除"));
+    }
+    
+    /**
+     * 为用户添加角色
+     */
+    @PostMapping("/{username}/roles/{roleCode}")
+    @PreAuthorize("hasAuthority('USER_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> addRoleToUser(
+            @PathVariable String username, 
+            @PathVariable String roleCode) {
+        userApplicationService.addRoleToUser(username, roleCode);
+        return ResponseEntity.ok(ApiResponse.success(null, "角色已添加到用户"));
+    }
+    
+    /**
+     * 从用户中移除角色
+     */
+    @DeleteMapping("/{username}/roles/{roleCode}")
+    @PreAuthorize("hasAuthority('USER_EDIT')")
+    public ResponseEntity<ApiResponse<Void>> removeRoleFromUser(
+            @PathVariable String username, 
+            @PathVariable String roleCode) {
+        userApplicationService.removeRoleFromUser(username, roleCode);
+        return ResponseEntity.ok(ApiResponse.success(null, "角色已从用户中移除"));
+    }
+} 
