@@ -37,7 +37,9 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        return ApiResponse.<Map<String, String>>error("400", "请求参数验证失败").data(errors);
+        ApiResponse<Map<String, String>> response = ApiResponse.error("400", "请求参数验证失败");
+        response.setData(errors);
+        return response;
     }
     
     /**
@@ -76,6 +78,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<Void> handleAllExceptions(Exception ex) {
         logger.error("系统异常: ", ex);
-        return ApiResponse.error("系统异常，请稍后再试");
+        return ApiResponse.error("500", "系统异常，请稍后再试");
     }
 } 

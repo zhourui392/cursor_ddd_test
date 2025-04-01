@@ -4,7 +4,6 @@ import com.example.demo.domain.model.valueobject.Email;
 import com.example.demo.domain.model.valueobject.Phone;
 import com.example.demo.domain.model.valueobject.UserId;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 
 import java.time.LocalDateTime;

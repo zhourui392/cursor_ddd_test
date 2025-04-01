@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.application.command.CreateUserCommand;
 import com.example.demo.application.command.UpdateUserCommand;
 import com.example.demo.application.dto.PermissionDTO;
 import com.example.demo.application.dto.RoleDTO;
@@ -51,13 +52,23 @@ public class UserController {
     }
     
     /**
+     * 创建用户
+     */
+    @PostMapping
+    @PreAuthorize("hasAuthority('USER_ADD')")
+    public ResponseEntity<ApiResponse<UserDTO>> createUser(@Valid @RequestBody CreateUserCommand command) {
+        UserDTO createdUser = userApplicationService.createUser(command);
+        return ResponseEntity.ok(ApiResponse.success("用户创建成功", createdUser));
+    }
+    
+    /**
      * 获取当前登录用户信息（包含角色和权限）
      */
     @GetMapping("/current")
     public ResponseEntity<ApiResponse<UserDTO>> getCurrentUser() {
         String username = SecurityUtils.getCurrentUsername();
         if (username == null) {
-            return ResponseEntity.ok(ApiResponse.error("用户未登录"));
+            return ResponseEntity.ok(ApiResponse.error("500", "用户未登录"));
         }
         
         // 获取用户信息（包含角色和权限）
@@ -92,7 +103,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<Object>> getCurrentUserPermissions() {
         String username = SecurityUtils.getCurrentUsername();
         if (username == null) {
-            return ResponseEntity.ok(ApiResponse.error("用户未登录"));
+            return ResponseEntity.ok(ApiResponse.error("500", "用户未登录"));
         }
         
         // 使用领域服务获取用户权限
@@ -143,7 +154,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('USER_DELETE')")
     public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
         userApplicationService.deleteUser(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "用户已删除"));
+        return ResponseEntity.ok(ApiResponse.<Void>success("用户已删除", null));
     }
     
     /**
@@ -155,7 +166,7 @@ public class UserController {
             @PathVariable String username, 
             @PathVariable String roleCode) {
         userApplicationService.addRoleToUser(username, roleCode);
-        return ResponseEntity.ok(ApiResponse.success(null, "角色已添加到用户"));
+        return ResponseEntity.ok(ApiResponse.<Void>success("角色已添加到用户", null));
     }
     
     /**
@@ -167,7 +178,7 @@ public class UserController {
             @PathVariable String username, 
             @PathVariable String roleCode) {
         userApplicationService.removeRoleFromUser(username, roleCode);
-        return ResponseEntity.ok(ApiResponse.success(null, "角色已从用户中移除"));
+        return ResponseEntity.ok(ApiResponse.<Void>success("角色已从用户中移除", null));
     }
     
     /**

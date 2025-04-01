@@ -24,6 +24,18 @@ export function getUserById(id) {
 }
 
 /**
+ * 创建用户
+ * @param {Object} data - 用户信息
+ */
+export function createUser(data) {
+  return request({
+    url: '/users',
+    method: 'post',
+    data
+  })
+}
+
+/**
  * 更新用户
  * @param {number} id - 用户 ID
  * @param {Object} data - 用户信息

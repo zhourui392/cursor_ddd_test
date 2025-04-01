@@ -5,6 +5,7 @@ import com.example.demo.application.command.RegisterUserCommand;
 import com.example.demo.application.dto.UserDTO;
 import com.example.demo.application.service.UserApplicationService;
 import com.example.demo.facade.dto.ApiResponse;
+import com.example.demo.infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class AuthController {
     
     private final UserApplicationService userApplicationService;
+    private final JwtUtil jwtUtil;
     
     /**
      * 用户注册
@@ -48,5 +50,20 @@ public class AuthController {
         tokenMap.put("tokenType", "Bearer");
         
         return ResponseEntity.ok(ApiResponse.success(tokenMap));
+    }
+    
+    /**
+     * 用户退出登录
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout(@RequestHeader(value = "Authorization", required = false) String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            // 从Authorization头中提取token
+            String jwtToken = token.substring(7);
+            // 将token加入黑名单
+            jwtUtil.blacklistToken(jwtToken);
+        }
+        
+        return ResponseEntity.ok(ApiResponse.success("退出登录成功"));
     }
 }

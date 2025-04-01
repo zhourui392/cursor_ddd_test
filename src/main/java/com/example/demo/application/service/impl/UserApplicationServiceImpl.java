@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.application.command.CreateUserCommand;
 import com.example.demo.application.command.LoginCommand;
 import com.example.demo.application.command.RegisterUserCommand;
 import com.example.demo.application.command.UpdateUserCommand;
@@ -76,6 +77,42 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         User savedUser = userRepository.save(user);
         
         // 5. 转换为DTO并返回
+        return userConvert.toDto(savedUser);
+    }
+    
+    /**
+     * 创建用户（管理员操作）
+     */
+    @Override
+    public UserDTO createUser(CreateUserCommand command) {
+        // 1. 业务规则验证
+        if (userRepository.existsByUsername(command.getUsername())) {
+            throw new RuntimeException("用户名已存在");
+        }
+
+        // 2. 创建用户实体（工厂方法）
+        User user = User.create(
+                command.getUsername(),
+                passwordService.encryptPassword(command.getPassword()),
+                command.getNickname(),
+                command.getEmail(),
+                command.getPhone()
+        );
+        
+        // 3. 设置状态
+        if (command.getStatus() != null && !command.getStatus()) {
+            user.disable();
+        }
+
+        // 4. 默认分配USER角色
+        Role userRole = roleRepository.findByCode("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("默认角色未找到"));
+        user.addRole(userRole);
+
+        // 5. 保存用户
+        User savedUser = userRepository.save(user);
+        
+        // 6. 转换为DTO并返回
         return userConvert.toDto(savedUser);
     }
 

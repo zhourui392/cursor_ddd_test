@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -26,6 +27,9 @@ public class JwtUtil {
 
     @Value("${jwt.expiration:86400}") // 默认token有效期为24小时
     private long expiration;
+    
+    // 使用ConcurrentHashMap存储已注销的token
+    private final Map<String, Date> blacklistedTokens = new ConcurrentHashMap<>();
 
     /**
      * 从token中提取用户名
@@ -67,6 +71,40 @@ public class JwtUtil {
     private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
+    
+    /**
+     * 检查token是否在黑名单中
+     */
+    private Boolean isTokenBlacklisted(String token) {
+        return blacklistedTokens.containsKey(token);
+    }
+    
+    /**
+     * 将token加入黑名单
+     */
+    public void blacklistToken(String token) {
+        if (token != null && !token.isEmpty()) {
+            try {
+                // 获取token的过期时间
+                Date expiryDate = extractExpiration(token);
+                // 将token加入黑名单，并记录过期时间
+                blacklistedTokens.put(token, expiryDate);
+                
+                // 清理过期的黑名单token
+                cleanupBlacklist();
+            } catch (Exception e) {
+                // 如果token无效，忽略错误
+            }
+        }
+    }
+    
+    /**
+     * 清理黑名单中已过期的token
+     */
+    private void cleanupBlacklist() {
+        Date now = new Date();
+        blacklistedTokens.entrySet().removeIf(entry -> entry.getValue().before(now));
+    }
 
     /**
      * 生成token
@@ -95,6 +133,11 @@ public class JwtUtil {
      * 验证token
      */
     public Boolean validateToken(String token, UserDetails userDetails) {
+        // 检查token是否在黑名单中
+        if (isTokenBlacklisted(token)) {
+            return false;
+        }
+        
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }

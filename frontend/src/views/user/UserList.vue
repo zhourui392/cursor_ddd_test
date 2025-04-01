@@ -140,7 +140,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { getUserList, getUserById, updateUser, deleteUser, addRoleToUser, removeRoleFromUser } from '@/api/user'
+import { getUserList, getUserById, createUser, updateUser, deleteUser, addRoleToUser, removeRoleFromUser } from '@/api/user'
 import { getRoleList } from '@/api/role'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -335,8 +335,8 @@ const submitForm = () => {
         }
         
         if (dialogType.value === 'add') {
-          // TODO: 替换为创建用户的API调用
-          await updateUser(0, submitData)
+          // 使用创建用户API
+          await createUser(submitData)
         } else {
           await updateUser(userForm.id, submitData)
         }

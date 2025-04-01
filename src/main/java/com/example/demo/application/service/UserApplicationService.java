@@ -1,5 +1,6 @@
 package com.example.demo.application.service;
 
+import com.example.demo.application.command.CreateUserCommand;
 import com.example.demo.application.command.LoginCommand;
 import com.example.demo.application.command.RegisterUserCommand;
 import com.example.demo.application.command.UpdateUserCommand;
@@ -15,6 +16,11 @@ public interface UserApplicationService {
      * 注册用户
      */
     UserDTO registerUser(RegisterUserCommand command);
+    
+    /**
+     * 创建用户（管理员操作）
+     */
+    UserDTO createUser(CreateUserCommand command);
     
     /**
      * 登录
