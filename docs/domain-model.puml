@@ -1,0 +1,143 @@
+@startuml DDD权限管理系统域模型
+
+skinparam class {
+  BackgroundColor White
+  ArrowColor Black
+  BorderColor Black
+}
+
+package "用户身份聚合" {
+  class User <<聚合根>> {
+    - id: UUID
+    - username: String
+    - password: String 
+    - email: String
+    - enabled: boolean
+    - roles: Set<Role>
+    + addRole(role: Role): void
+    + removeRole(role: Role): void 
+    + hasRole(roleName: String): boolean
+    + hasPermission(permissionName: String): boolean
+    + getPermissions(): Set<Permission>
+  }
+  
+  class Role <<实体>> {
+    - id: UUID
+    - name: String
+    - description: String
+    - permissions: Set<Permission>
+    + addPermission(permission: Permission): void
+    + removePermission(permission: Permission): void
+    + hasPermission(permissionName: String): boolean
+  }
+  
+  class Permission <<值对象>> {
+    - id: UUID
+    - name: String
+    - description: String
+  }
+}
+
+package "菜单聚合" {
+  class Menu <<聚合根>> {
+    - id: UUID
+    - name: String
+    - path: String
+    - component: String
+    - icon: String
+    - parentId: UUID
+    - order: int
+    - hidden: boolean
+    - children: List<Menu>
+    - requiredPermission: Permission
+    + addChild(menu: Menu): void
+    + removeChild(menu: Menu): void
+    + sortChildren(): void
+  }
+}
+
+package "操作日志聚合" {
+  class OperationLog <<聚合根>> {
+    - id: UUID
+    - userId: UUID
+    - username: String
+    - operation: String
+    - method: String
+    - params: String
+    - ipAddress: String
+    - createTime: LocalDateTime
+    - status: int
+    - errorMessage: String
+  }
+}
+
+package "域服务" {
+  class UserDomainService <<Domain Service>> {
+    + registerUser(username, password, email): User
+    + authenticateUser(username, password): AuthenticationResult
+    + addRoleToUser(user, role): void
+    + removeRoleFromUser(user, role): void
+    + getUserPermissions(user): Set<Permission>
+    + hasPermission(user, permissionName): boolean
+  }
+  
+  class MenuDomainService <<Domain Service>> {
+    + createMenu(name, path, component): Menu
+    + buildMenuTree(): List<Menu>
+    + getMenusByPermissions(permissions): List<Menu>
+  }
+}
+
+package "资源库" {
+  interface UserRepository <<Repository>> {
+    + save(user: User): User
+    + findById(id: UUID): Optional<User>
+    + findByUsername(username: String): Optional<User>
+    + findAll(): List<User>
+    + delete(user: User): void
+  }
+  
+  interface RoleRepository <<Repository>> {
+    + save(role: Role): Role
+    + findById(id: UUID): Optional<Role>
+    + findByName(name: String): Optional<Role>
+    + findAll(): List<Role>
+  }
+  
+  interface PermissionRepository <<Repository>> {
+    + save(permission: Permission): Permission
+    + findById(id: UUID): Optional<Permission>
+    + findByName(name: String): Optional<Permission>
+    + findAll(): List<Permission>
+  }
+  
+  interface MenuRepository <<Repository>> {
+    + save(menu: Menu): Menu
+    + findById(id: UUID): Optional<Menu>
+    + findByParentId(parentId: UUID): List<Menu>
+    + findRootMenus(): List<Menu>
+    + findAll(): List<Menu>
+  }
+  
+  interface OperationLogRepository <<Repository>> {
+    + save(log: OperationLog): OperationLog
+    + findByUserId(userId: UUID): List<OperationLog>
+    + findByDateRange(start: LocalDateTime, end: LocalDateTime): List<OperationLog>
+  }
+}
+
+' 关系定义
+User "1" *-- "n" Role : 包含 >
+Role "1" *-- "n" Permission : 包含 >
+Menu "1" o-- "n" Menu : 父子关系 >
+Menu "1" --> "1" Permission : 需要 >
+UserDomainService ..> User : 操作 >
+UserDomainService ..> Role : 操作 >
+MenuDomainService ..> Menu : 操作 >
+UserRepository ..> User : 管理 >
+RoleRepository ..> Role : 管理 >
+PermissionRepository ..> Permission : 管理 >
+MenuRepository ..> Menu : 管理 >
+OperationLogRepository ..> OperationLog : 管理 >
+
+@enduml 

@@ -1,0 +1,101 @@
+@startuml DDD系统层次结构
+
+skinparam {
+  BackgroundColor White
+  ArrowColor Black
+  BorderColor Black
+}
+
+!define RECTANGLE class
+!define INTERFACE interface
+
+skinparam rectangle {
+  BackgroundColor WhiteSmoke
+  BorderColor Black
+  FontSize 14
+}
+
+skinparam arrow {
+  FontSize 12
+}
+
+rectangle "接口层\n(Interface Layer)" as Interface #LightYellow {
+  rectangle "REST API" as Rest
+  rectangle "GraphQL API" as GraphQL
+  rectangle "Web界面" as Web
+}
+
+rectangle "应用层\n(Application Layer)" as Application #LightBlue {
+  RECTANGLE "应用服务\nApplicationService" as ApplicationService
+  RECTANGLE "DTO组装/拆解\nAssembler" as Assembler
+}
+
+rectangle "领域层\n(Domain Layer)" as Domain #LightGreen {
+  rectangle "聚合\nAggregates" as Aggregate {
+    RECTANGLE "聚合根\nAggregate Root" as AggregateRoot
+    RECTANGLE "实体\nEntity" as Entity
+    RECTANGLE "值对象\nValue Object" as ValueObject
+  }
+  
+  rectangle "领域服务\nDomain Services" as DomainServices
+  rectangle "领域事件\nDomain Events" as DomainEvents
+  
+  INTERFACE "资源库接口\nRepository Interfaces" as RepositoryInterface
+  INTERFACE "领域规范\nSpecifications" as Specifications
+}
+
+rectangle "基础设施层\n(Infrastructure Layer)" as Infrastructure #LightPink {
+  RECTANGLE "数据持久化\nRepository Impl" as RepositoryImpl
+  RECTANGLE "ORM映射\nORM Mapping" as ORM
+  RECTANGLE "事务管理\nTransaction" as Transaction
+  RECTANGLE "安全实现\nSecurity Impl" as Security
+  RECTANGLE "缓存实现\nCache Impl" as Cache
+  RECTANGLE "外部服务集成\nExternal Services" as ExternalServices
+}
+
+' 箭头定义依赖关系
+Interface -down-> Application : 依赖 >
+Application -down-> Domain : 依赖 >
+Application -down-> RepositoryInterface : 依赖 >
+Domain -left[hidden]- Infrastructure
+Infrastructure .up.> Domain : 实现接口 >
+
+' 层内细节关系
+Rest -[hidden]right- GraphQL
+Rest -[hidden]right- Web
+ApplicationService -[hidden]right- Assembler
+AggregateRoot -down-> Entity : 包含 >
+AggregateRoot -down-> ValueObject : 包含 >
+DomainServices -[hidden]right- DomainEvents
+RepositoryInterface -[hidden]down- Specifications
+RepositoryImpl .up.> RepositoryInterface : 实现 >
+RepositoryImpl -down-> ORM : 使用 >
+ORM -[hidden]right- Transaction
+Transaction -[hidden]right- Security
+Security -[hidden]right- Cache
+Cache -[hidden]right- ExternalServices
+
+' 注释
+note right of Interface
+  提供API接口和用户界面，
+  将请求委托给应用层
+end note
+
+note right of Application
+  编排领域对象以完成用例，
+  不包含业务规则，负责事务控制
+end note
+
+note right of Domain
+  包含业务概念、规则和逻辑，
+  核心层，独立于其他层
+end note
+
+note right of Infrastructure
+  提供技术能力的实现，
+  支持其他层的技术需求
+end note
+
+footer DDD系统分层架构图 - 权限管理系统项目文档
+
+@enduml 
