@@ -127,8 +127,6 @@ tmp/
 *.tar.gz
 *.rar
 
-# Cursor编辑器临时文件
-.cursor/
 
 # Docker相关
 docker-compose.override.yml
