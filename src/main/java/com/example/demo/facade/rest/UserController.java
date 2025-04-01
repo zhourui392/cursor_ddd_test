@@ -1,10 +1,10 @@
 package com.example.demo.facade.rest;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +22,7 @@ import com.example.demo.application.dto.PermissionDTO;
 import com.example.demo.application.dto.RoleDTO;
 import com.example.demo.application.dto.UserDTO;
 import com.example.demo.application.service.UserApplicationService;
+import com.example.demo.domain.service.UserDomainService;
 import com.example.demo.facade.dto.ApiResponse;
 import com.example.demo.infrastructure.utils.SecurityUtils;
 
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
     
     private final UserApplicationService userApplicationService;
+    private final UserDomainService userDomainService;
     
     /**
      * 获取所有用户
@@ -84,6 +86,7 @@ public class UserController {
     
     /**
      * 获取当前登录用户的角色和权限
+     * 使用领域服务提供的方法
      */
     @GetMapping("/current/permissions")
     public ResponseEntity<ApiResponse<Object>> getCurrentUserPermissions() {
@@ -92,29 +95,22 @@ public class UserController {
             return ResponseEntity.ok(ApiResponse.error("用户未登录"));
         }
         
-        // 获取用户信息（包含角色和权限）
+        // 使用领域服务获取用户权限
+        List<String> permissionCodes = userDomainService.getUserPermissionCodes(username);
+        
+        // 构建包含角色和权限的响应对象
+        Map<String, Object> result = new HashMap<>();
+        
+        // 获取用户信息和角色信息
         UserDTO user = userApplicationService.getUserByUsername(username);
+        List<String> roleCodes = user.getRoles().stream()
+            .map(RoleDTO::getCode)
+            .collect(Collectors.toList());
         
-        // 构建角色和权限的响应结构
-        if (user.getRoles() != null) {
-            Set<RoleDTO> roles = user.getRoles();
-            
-            // 提取所有权限代码，用于前端权限控制
-            Set<String> permissionCodes = roles.stream()
-                .filter(role -> role.getPermissions() != null)
-                .flatMap(role -> role.getPermissions().stream())
-                .map(PermissionDTO::getCode)
-                .collect(Collectors.toSet());
-            
-            // 构建包含角色和权限的响应对象
-            var result = new HashMap<String, Object>();
-            result.put("roles", roles.stream().map(RoleDTO::getCode).collect(Collectors.toList()));
-            result.put("permissions", permissionCodes);
-            
-            return ResponseEntity.ok(ApiResponse.success(result));
-        }
+        result.put("roles", roleCodes);
+        result.put("permissions", permissionCodes);
         
-        return ResponseEntity.ok(ApiResponse.success(Map.of("roles", List.of(), "permissions", List.of())));
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
     
     /**
@@ -172,5 +168,29 @@ public class UserController {
             @PathVariable String roleCode) {
         userApplicationService.removeRoleFromUser(username, roleCode);
         return ResponseEntity.ok(ApiResponse.success(null, "角色已从用户中移除"));
+    }
+    
+    /**
+     * 检查用户是否拥有特定权限
+     */
+    @GetMapping("/{username}/has-permission/{permissionCode}")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    public ResponseEntity<ApiResponse<Boolean>> hasPermission(
+            @PathVariable String username,
+            @PathVariable String permissionCode) {
+        boolean hasPermission = userDomainService.hasPermission(username, permissionCode);
+        return ResponseEntity.ok(ApiResponse.success(hasPermission));
+    }
+    
+    /**
+     * 检查用户是否拥有特定角色
+     */
+    @GetMapping("/{username}/has-role/{roleCode}")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    public ResponseEntity<ApiResponse<Boolean>> hasRole(
+            @PathVariable String username,
+            @PathVariable String roleCode) {
+        boolean hasRole = userDomainService.hasRole(username, roleCode);
+        return ResponseEntity.ok(ApiResponse.success(hasRole));
     }
 } 

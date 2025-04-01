@@ -1,5 +1,11 @@
 package com.example.demo.application.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.application.command.LoginCommand;
 import com.example.demo.application.command.RegisterUserCommand;
 import com.example.demo.application.command.UpdateUserCommand;
@@ -11,17 +17,15 @@ import com.example.demo.domain.model.valueobject.UserId;
 import com.example.demo.domain.repository.RoleRepository;
 import com.example.demo.domain.repository.UserRepository;
 import com.example.demo.domain.service.PasswordService;
-import com.example.demo.infrastructure.security.JwtUtil;
+import com.example.demo.domain.service.UserDomainService;
 import com.example.demo.infrastructure.convert.UserConvert;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.infrastructure.security.JwtUtil;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 用户应用服务实现类
+ * 应用层负责用例的编排和转换，不包含业务规则
  */
 @Service
 @RequiredArgsConstructor
@@ -33,13 +37,19 @@ public class UserApplicationServiceImpl implements UserApplicationService {
     private final PasswordService passwordService;
     private final JwtUtil jwtUtil;
     private final UserConvert userConvert;
+    private final UserDomainService userDomainService;
 
+    /**
+     * 用户注册
+     */
     @Override
     public UserDTO registerUser(RegisterUserCommand command) {
+        // 1. 业务规则验证
         if (userRepository.existsByUsername(command.getUsername())) {
             throw new RuntimeException("用户名已存在");
         }
 
+        // 2. 创建用户实体（工厂方法）
         User user = User.create(
                 command.getUsername(),
                 passwordService.encryptPassword(command.getPassword()),
@@ -48,6 +58,7 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 command.getPhone()
         );
 
+        // 3. 分配角色
         // 如果未指定角色，默认赋予USER角色
         if (command.getRoles() == null || command.getRoles().isEmpty()) {
             Role userRole = roleRepository.findByCode("ROLE_USER")
@@ -61,31 +72,43 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             });
         }
 
+        // 4. 保存用户
         User savedUser = userRepository.save(user);
+        
+        // 5. 转换为DTO并返回
         return userConvert.toDto(savedUser);
     }
 
+    /**
+     * 用户登录
+     */
     @Override
     public String login(LoginCommand command) {
+        // 1. 查找用户
         User user = userRepository.findByUsername(command.getUsername())
                 .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
 
+        // 2. 验证密码
         if (!passwordService.matches(command.getPassword(), user.getPassword())) {
             throw new RuntimeException("用户名或密码错误");
         }
 
+        // 3. 检查用户状态
         if (!user.getStatus()) {
             throw new RuntimeException("用户已被禁用");
         }
 
-        // 记录登录时间
+        // 4. 记录登录时间
         user.recordLogin();
         userRepository.save(user);
 
-        // 生成JWT token
+        // 5. 生成JWT令牌
         return jwtUtil.generateToken(user.getUsername());
     }
 
+    /**
+     * 根据ID获取用户信息
+     */
     @Override
     @Transactional(readOnly = true)
     public UserDTO getUserById(Long id) {
@@ -94,6 +117,9 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         return userConvert.toDto(user);
     }
 
+    /**
+     * 根据用户名获取用户信息
+     */
     @Override
     @Transactional(readOnly = true)
     public UserDTO getUserByUsername(String username) {
@@ -102,6 +128,9 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         return userConvert.toDto(user);
     }
 
+    /**
+     * 获取所有用户
+     */
     @Override
     @Transactional(readOnly = true)
     public List<UserDTO> getAllUsers() {
@@ -111,13 +140,19 @@ public class UserApplicationServiceImpl implements UserApplicationService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 更新用户信息
+     */
     @Override
     public UserDTO updateUser(UpdateUserCommand command) {
+        // 1. 查找用户
         User user = userRepository.findById(new UserId(command.getId()))
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
+        // 2. 更新基本信息
         user.updateProfile(command.getNickname(), command.getEmail(), command.getPhone());
 
+        // 3. 更新状态
         if (command.getStatus() != null) {
             if (command.getStatus()) {
                 user.enable();
@@ -126,10 +161,16 @@ public class UserApplicationServiceImpl implements UserApplicationService {
             }
         }
 
+        // 4. 保存更新
         User savedUser = userRepository.save(user);
+        
+        // 5. 转换为DTO并返回
         return userConvert.toDto(savedUser);
     }
 
+    /**
+     * 删除用户
+     */
     @Override
     public void deleteUser(Long id) {
         User user = userRepository.findById(new UserId(id))
@@ -137,26 +178,31 @@ public class UserApplicationServiceImpl implements UserApplicationService {
         userRepository.delete(user);
     }
 
+    /**
+     * 为用户添加角色
+     * 委托给领域服务处理
+     */
     @Override
     public void addRoleToUser(String username, String roleCode) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
-        Role role = roleRepository.findByCode(roleCode)
-                .orElseThrow(() -> new RuntimeException("角色不存在"));
-        user.addRole(role);
-        userRepository.save(user);
+        try {
+            userDomainService.assignRoleToUser(username, roleCode);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
+    /**
+     * 从用户中移除角色
+     * 委托给领域服务处理
+     */
     @Override
     public void removeRoleFromUser(String username, String roleCode) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
-        Role role = roleRepository.findByCode(roleCode)
-                .orElseThrow(() -> new RuntimeException("角色不存在"));
-        user.removeRole(role);
-        userRepository.save(user);
+        userDomainService.removeRoleFromUser(username, roleCode);
     }
 
+    /**
+     * 更新用户最后登录时间
+     */
     @Override
     public void updateLastLoginTime(String username) {
         User user = userRepository.findByUsername(username)
