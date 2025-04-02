@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.demo.infrastructure.mapper.UserRoleMapper">
+    
+    <!-- 添加用户角色关联 -->
+    <insert id="insert">
+        INSERT INTO user_role (user_id, role_id)
+        VALUES (#{userId}, #{roleId})
+    </insert>
+    
+    <!-- 批量添加用户角色关联 -->
+    <insert id="batchInsert">
+        INSERT INTO user_role (user_id, role_id)
+        VALUES 
+        <foreach collection="roleIds" item="roleId" separator=",">
+            (#{userId}, #{roleId})
+        </foreach>
+    </insert>
+    
+    <!-- 删除用户的所有角色关联 -->
+    <delete id="deleteByUserId">
+        DELETE FROM user_role
+        WHERE user_id = #{userId}
+    </delete>
+    
+    <!-- 删除用户特定角色关联 -->
+    <delete id="deleteByUserIdAndRoleId">
+        DELETE FROM user_role
+        WHERE user_id = #{userId} AND role_id = #{roleId}
+    </delete>
+    
+    <!-- 检查用户是否有特定角色 -->
+    <select id="countByUserIdAndRoleId" resultType="int">
+        SELECT COUNT(1)
+        FROM user_role
+        WHERE user_id = #{userId} AND role_id = #{roleId}
+    </select>
+</mapper> 

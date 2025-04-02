@@ -19,6 +19,7 @@ import com.example.demo.infrastructure.convert.UserConvert;
 import com.example.demo.infrastructure.mapper.PermissionMapper;
 import com.example.demo.infrastructure.mapper.RoleMapper;
 import com.example.demo.infrastructure.mapper.UserMapper;
+import com.example.demo.infrastructure.mapper.UserRoleMapper;
 import com.example.demo.infrastructure.persistence.entity.PermissionDO;
 import com.example.demo.infrastructure.persistence.entity.RoleDO;
 import com.example.demo.infrastructure.persistence.entity.UserDO;
@@ -39,6 +40,7 @@ public class UserRepositoryImpl implements UserRepository {
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
+    private final UserRoleMapper userRoleMapper;
     private final UserConvert userConvert;
     private final RoleConvert roleConvert;
     private final PermissionConvert permissionConvert;
@@ -74,6 +76,26 @@ public class UserRepositoryImpl implements UserRepository {
             userMapper.insert(userDO);
         } else {
             userMapper.updateById(userDO);
+        }
+        
+        // 处理用户-角色关联
+        if (user.getId() != null) {
+            // 删除该用户原有的所有角色关联
+            userRoleMapper.deleteByUserId(userDO.getId());
+            
+            // 添加新的角色关联
+            if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                // 将角色ID提取为列表
+                List<Long> roleIds = user.getRoles().stream()
+                    .filter(role -> role.getId() != null)
+                    .map(role -> role.getId().getValue())
+                    .collect(Collectors.toList());
+                    
+                if (!roleIds.isEmpty()) {
+                    // 使用批量插入
+                    userRoleMapper.batchInsert(userDO.getId(), roleIds);
+                }
+            }
         }
         
         // 返回转换后的领域对象
@@ -189,6 +211,9 @@ public class UserRepositoryImpl implements UserRepository {
         Objects.requireNonNull(user, "待删除的用户不能为空");
         Objects.requireNonNull(user.getId(), "待删除的用户ID不能为空");
         
+        // 删除用户角色关联
+        userRoleMapper.deleteByUserId(user.getId().getValue());
+        // 删除用户
         userMapper.deleteById(user.getId().getValue());
     }
 } 
