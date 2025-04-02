@@ -26,7 +26,8 @@ public class PermissionTest {
         permission = Permission.create(
                 "用户管理",
                 "USER_MANAGE",
-                "用户管理权限"
+                "用户管理权限",
+                "用户管理"
         );
 
         // 设置权限ID
@@ -36,6 +37,7 @@ public class PermissionTest {
                 "用户管理",
                 "USER_MANAGE",
                 "用户管理权限",
+                "用户管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -48,12 +50,14 @@ public class PermissionTest {
         Permission newPermission = Permission.create(
                 "角色管理",
                 "ROLE_MANAGE",
-                "角色管理权限"
+                "角色管理权限",
+                "权限管理"
         );
 
         assertEquals("角色管理", newPermission.getName());
         assertEquals("ROLE_MANAGE", newPermission.getCode());
         assertEquals("角色管理权限", newPermission.getDescription());
+        assertEquals("权限管理", newPermission.getModule());
         assertTrue(newPermission.getStatus());
         assertNotNull(newPermission.getCreateTime());
         assertNotNull(newPermission.getUpdateTime());
@@ -65,13 +69,22 @@ public class PermissionTest {
         assertThrows(NullPointerException.class, () -> Permission.create(
                 null,  // 权限名为null
                 "USER_MANAGE",
-                "用户管理权限"
+                "用户管理权限",
+                "用户管理"
         ));
 
         assertThrows(NullPointerException.class, () -> Permission.create(
                 "用户管理",
                 null,  // 权限编码为null
-                "用户管理权限"
+                "用户管理权限",
+                "用户管理"
+        ));
+        
+        assertThrows(NullPointerException.class, () -> Permission.create(
+                "用户管理",
+                "USER_MANAGE",
+                "用户管理权限",
+                null  // 模块名为null
         ));
     }
 
@@ -92,10 +105,11 @@ public class PermissionTest {
     public void testUpdate() {
         // 测试更新权限信息
         LocalDateTime originalUpdateTime = permission.getUpdateTime();
-        permission.update("用户权限管理", "系统用户管理权限");
+        permission.update("用户权限管理", "系统用户管理权限", "用户模块");
         
         assertEquals("用户权限管理", permission.getName());
         assertEquals("系统用户管理权限", permission.getDescription());
+        assertEquals("用户模块", permission.getModule());
         assertTrue(permission.getUpdateTime().isAfter(originalUpdateTime) || 
                    permission.getUpdateTime().equals(originalUpdateTime));
     }
@@ -103,7 +117,8 @@ public class PermissionTest {
     @Test
     public void testUpdateWithNullName() {
         // 测试更新时名称为null的异常处理
-        assertThrows(NullPointerException.class, () -> permission.update(null, "描述"));
+        assertThrows(NullPointerException.class, () -> permission.update(null, "描述", "模块"));
+        assertThrows(NullPointerException.class, () -> permission.update("名称", "描述", null));
     }
 
     @Test
@@ -114,6 +129,7 @@ public class PermissionTest {
                 "用户管理1",
                 "USER_MANAGE",
                 "描述1",
+                "用户管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -124,6 +140,7 @@ public class PermissionTest {
                 "用户管理2",
                 "USER_MANAGE",  // 相同的code
                 "描述2",
+                "用户权限",  // 不同的模块
                 false,
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -134,6 +151,7 @@ public class PermissionTest {
                 "角色管理",
                 "ROLE_MANAGE",  // 不同的code
                 "角色管理权限",
+                "权限管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()

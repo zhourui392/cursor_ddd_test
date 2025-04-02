@@ -96,14 +96,23 @@
         <p>角色：{{ selectedRole.name }}</p>
         <el-divider />
         
-        <el-tree
-          ref="permissionTreeRef"
-          node-key="id"
-          :data="permissionTreeData"
-          :props="{ label: 'name', children: 'children' }"
-          show-checkbox
-          default-expand-all
-        />
+        <!-- 按模块分组的权限列表 -->
+        <el-tabs type="border-card">
+          <el-tab-pane v-for="(permissions, module) in modulePermissions" :key="module" :label="module">
+            <el-checkbox-group v-model="selectedPermissionIds">
+              <el-row :gutter="10">
+                <el-col :span="8" v-for="permission in permissions" :key="permission.id">
+                  <el-checkbox :label="permission.id">
+                    {{ permission.name }}
+                    <el-tooltip :content="permission.description" placement="top">
+                      <el-icon><InfoFilled /></el-icon>
+                    </el-tooltip>
+                  </el-checkbox>
+                </el-col>
+              </el-row>
+            </el-checkbox-group>
+          </el-tab-pane>
+        </el-tabs>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -116,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { getRoleList, getRoleById, createRole, updateRole, deleteRole, addPermissionToRole, removePermissionFromRole } from '@/api/role'
 import { getPermissionList } from '@/api/permission'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -129,9 +138,22 @@ const permissionSubmitLoading = ref(false)
 // 角色列表
 const roleList = ref([])
 
-// 权限树数据
-const permissionTreeData = ref([])
-const permissionTreeRef = ref(null)
+// 权限列表
+const permissionList = ref([])
+const selectedPermissionIds = ref([])
+
+// 按模块分组的权限
+const modulePermissions = computed(() => {
+  const result = {}
+  permissionList.value.forEach(permission => {
+    const module = permission.module || '未分类'
+    if (!result[module]) {
+      result[module] = []
+    }
+    result[module].push(permission)
+  })
+  return result
+})
 
 // 弹窗控制
 const dialogVisible = ref(false)
@@ -176,18 +198,11 @@ const fetchRoles = async () => {
   }
 }
 
-// 获取权限列表并构建树结构
+// 获取权限列表并按模块分组
 const fetchPermissions = async () => {
   try {
     const res = await getPermissionList()
-    const permissions = res.data
-    
-    // 这里简单处理，实际中可能需要根据数据结构构建层级树
-    permissionTreeData.value = permissions.map(perm => ({
-      id: perm.id,
-      name: perm.name,
-      code: perm.code
-    }))
+    permissionList.value = res.data
   } catch (error) {
     console.error('获取权限列表失败:', error)
     ElMessage.error('获取权限列表失败')
@@ -299,13 +314,7 @@ const openPermissionDialog = async (row) => {
     const roleWithPermissions = res.data
     
     // 设置已选择的权限
-    setTimeout(() => {
-      if (permissionTreeRef.value) {
-        permissionTreeRef.value.setCheckedKeys(
-          roleWithPermissions.permissions?.map(p => p.id) || []
-        )
-      }
-    }, 100)
+    selectedPermissionIds.value = roleWithPermissions.permissions?.map(p => p.id) || []
   } catch (error) {
     console.error('获取角色权限失败:', error)
   }
@@ -313,22 +322,21 @@ const openPermissionDialog = async (row) => {
 
 // 保存角色权限
 const saveRolePermissions = async () => {
-  if (!selectedRole.value || !permissionTreeRef.value) return
+  if (!selectedRole.value) return
   
   permissionSubmitLoading.value = true
   try {
     const roleCode = selectedRole.value.code
     const currentPermissionIds = selectedRole.value.permissions?.map(p => p.id) || []
-    const selectedPermissionIds = permissionTreeRef.value.getCheckedKeys()
     
     // 找出需要添加的权限
-    const permissionsToAdd = selectedPermissionIds.filter(id => !currentPermissionIds.includes(id))
+    const permissionsToAdd = selectedPermissionIds.value.filter(id => !currentPermissionIds.includes(id))
     
     // 找出需要移除的权限
-    const permissionsToRemove = currentPermissionIds.filter(id => !selectedPermissionIds.includes(id))
+    const permissionsToRemove = currentPermissionIds.filter(id => !selectedPermissionIds.value.includes(id))
     
     // 找到权限编码
-    const permissionMap = permissionTreeData.value.reduce((map, perm) => {
+    const permissionMap = permissionList.value.reduce((map, perm) => {
       map[perm.id] = perm.code
       return map
     }, {})

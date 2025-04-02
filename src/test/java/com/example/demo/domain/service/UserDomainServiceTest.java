@@ -71,6 +71,7 @@ public class UserDomainServiceTest {
                 "查看用户",
                 "USER_VIEW",
                 "查看用户信息权限",
+                "用户管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -81,6 +82,7 @@ public class UserDomainServiceTest {
                 "编辑用户",
                 "USER_EDIT",
                 "编辑用户信息权限",
+                "用户管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()

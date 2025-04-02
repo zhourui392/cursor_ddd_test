@@ -30,6 +30,11 @@ public class PermissionDTO {
     private String description;
     
     /**
+     * 模块名称
+     */
+    private String module;
+    
+    /**
      * 权限状态
      */
     private Boolean status;

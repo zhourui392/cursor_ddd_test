@@ -30,6 +30,9 @@ public class PermissionDO {
     @TableField("description")
     private String description;
     
+    @TableField("module")
+    private String module;
+    
     @TableField("status")
     private Boolean status = true;
     

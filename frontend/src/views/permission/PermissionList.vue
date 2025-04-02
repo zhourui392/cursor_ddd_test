@@ -6,43 +6,46 @@
       </el-button>
     </div>
     
-    <el-table
-      v-loading="loading"
-      :data="permissionList"
-      border
-      style="width: 100%"
-    >
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="权限名称" width="180" />
-      <el-table-column prop="code" label="权限编码" width="180" />
-      <el-table-column prop="description" label="描述" />
-      <el-table-column prop="status" label="状态" width="100">
-        <template #default="scope">
-          <el-tag :type="scope.row.status ? 'success' : 'danger'">
-            {{ scope.row.status ? '正常' : '禁用' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" width="180" />
-      <el-table-column label="操作" fixed="right" width="200">
-        <template #default="scope">
-          <el-button type="primary" link size="small" @click="handleEdit(scope.row)">
-            编辑
-          </el-button>
-          <el-button 
-            type="primary" 
-            link 
-            size="small" 
-            @click="handleStatusChange(scope.row)"
-          >
-            {{ scope.row.status ? '禁用' : '启用' }}
-          </el-button>
-          <el-button type="danger" link size="small" @click="handleDelete(scope.row)">
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <!-- 按模块分组的权限列表 -->
+    <el-collapse>
+      <el-collapse-item v-for="(permissions, moduleName) in groupedPermissions" :key="moduleName" :title="moduleName">
+        <el-table
+          :data="permissions"
+          border
+          style="width: 100%"
+        >
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="name" label="权限名称" width="180" />
+          <el-table-column prop="code" label="权限编码" width="180" />
+          <el-table-column prop="description" label="描述" />
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.status ? 'success' : 'danger'">
+                {{ scope.row.status ? '正常' : '禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" fixed="right" width="200">
+            <template #default="scope">
+              <el-button type="primary" link size="small" @click="handleEdit(scope.row)">
+                编辑
+              </el-button>
+              <el-button 
+                type="primary" 
+                link 
+                size="small" 
+                @click="handleStatusChange(scope.row)"
+              >
+                {{ scope.row.status ? '禁用' : '启用' }}
+              </el-button>
+              <el-button type="danger" link size="small" @click="handleDelete(scope.row)">
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-collapse-item>
+    </el-collapse>
     
     <div class="pagination-container">
       <el-pagination
@@ -66,6 +69,9 @@
         <el-form-item label="权限编码" prop="code">
           <el-input v-model="permissionForm.code" placeholder="请输入权限编码" :disabled="dialogType === 'edit'" />
         </el-form-item>
+        <el-form-item label="模块名称" prop="module">
+          <el-input v-model="permissionForm.module" placeholder="请输入模块名称" />
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="permissionForm.description" type="textarea" placeholder="请输入权限描述" />
         </el-form-item>
@@ -84,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { getPermissionList, getPermissionById, createPermission, updatePermission, deletePermission } from '@/api/permission'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -94,11 +100,24 @@ const submitLoading = ref(false)
 
 // 分页参数
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(100) // 增大页面大小，方便按模块分组显示
 const total = ref(0)
 
 // 权限列表
 const permissionList = ref([])
+
+// 按模块分组的权限列表
+const groupedPermissions = computed(() => {
+  const result = {}
+  permissionList.value.forEach(permission => {
+    const module = permission.module || '未分类'
+    if (!result[module]) {
+      result[module] = []
+    }
+    result[module].push(permission)
+  })
+  return result
+})
 
 // 弹窗控制
 const dialogVisible = ref(false)
@@ -110,6 +129,7 @@ const permissionForm = reactive({
   id: null,
   name: '',
   code: '',
+  module: '',
   description: '',
   status: true
 })
@@ -122,6 +142,9 @@ const permissionRules = {
   code: [
     { required: true, message: '请输入权限编码', trigger: 'blur' },
     { pattern: /^[A-Z_]+$/, message: '权限编码只能包含大写字母和下划线', trigger: 'blur' }
+  ],
+  module: [
+    { required: true, message: '请输入模块名称', trigger: 'blur' }
   ]
 }
 
@@ -250,7 +273,7 @@ const handleCurrentChange = (page) => {
   fetchPermissions()
 }
 
-// 页面加载时获取数据
+// 组件挂载时获取权限列表
 onMounted(() => {
   fetchPermissions()
 })
@@ -269,6 +292,18 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+/* el-collapse 样式调整 */
+:deep(.el-collapse-item__header) {
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #f5f7fa;
+  padding: 0 15px;
+}
+
+:deep(.el-collapse-item__content) {
+  padding: 20px;
 }
 </style>
  

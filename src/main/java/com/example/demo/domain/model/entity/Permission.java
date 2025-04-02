@@ -18,13 +18,15 @@ public class Permission {
     private String name;
     private String code;
     private String description;
+    private String module;
     private Boolean status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
-    private Permission(String name, String code) {
+    private Permission(String name, String code, String module) {
         this.name = Objects.requireNonNull(name, "权限名称不能为空");
         this.code = Objects.requireNonNull(code, "权限编码不能为空");
+        this.module = Objects.requireNonNull(module, "模块名称不能为空");
         this.status = true;
         this.createTime = LocalDateTime.now();
         this.updateTime = LocalDateTime.now();
@@ -33,8 +35,8 @@ public class Permission {
     /**
      * 创建新权限
      */
-    public static Permission create(String name, String code, String description) {
-        Permission permission = new Permission(name, code);
+    public static Permission create(String name, String code, String description, String module) {
+        Permission permission = new Permission(name, code, module);
         permission.description = description;
         return permission;
     }
@@ -58,9 +60,10 @@ public class Permission {
     /**
      * 更新权限信息
      */
-    public void update(String name, String description) {
+    public void update(String name, String description, String module) {
         this.name = Objects.requireNonNull(name, "权限名称不能为空");
         this.description = description;
+        this.module = Objects.requireNonNull(module, "模块名称不能为空");
         this.updateTime = LocalDateTime.now();
     }
 

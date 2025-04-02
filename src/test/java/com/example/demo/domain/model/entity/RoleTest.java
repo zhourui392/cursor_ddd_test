@@ -54,6 +54,7 @@ public class RoleTest {
                 "用户管理",
                 "USER_MANAGE",
                 "用户管理权限",
+                "用户管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()
@@ -65,6 +66,7 @@ public class RoleTest {
                 "角色管理",
                 "ROLE_MANAGE",
                 "角色管理权限",
+                "权限管理",
                 true,
                 LocalDateTime.now(),
                 LocalDateTime.now()

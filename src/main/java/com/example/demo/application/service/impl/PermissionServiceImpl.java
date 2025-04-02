@@ -49,7 +49,8 @@ public class PermissionServiceImpl implements PermissionService {
         Permission permission = Permission.create(
                 permissionDTO.getName(),
                 permissionDTO.getCode(),
-                permissionDTO.getDescription()
+                permissionDTO.getDescription(),
+                permissionDTO.getModule() != null ? permissionDTO.getModule() : "未分类"
         );
 
         // 保存并返回
@@ -71,7 +72,11 @@ public class PermissionServiceImpl implements PermissionService {
         }
 
         // 更新权限信息
-        permission.update(permissionDTO.getName(), permissionDTO.getDescription());
+        permission.update(
+            permissionDTO.getName(), 
+            permissionDTO.getDescription(),
+            permissionDTO.getModule() != null ? permissionDTO.getModule() : permission.getModule()
+        );
         
         // 状态更新
         if (permissionDTO.getStatus() != null) {
@@ -104,6 +109,7 @@ public class PermissionServiceImpl implements PermissionService {
         dto.setName(permission.getName());
         dto.setCode(permission.getCode());
         dto.setDescription(permission.getDescription());
+        dto.setModule(permission.getModule());
         dto.setStatus(permission.getStatus());
         dto.setCreateTime(permission.getCreateTime());
         dto.setUpdateTime(permission.getUpdateTime());

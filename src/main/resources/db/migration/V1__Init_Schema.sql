@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS `permission` (
   `name` varchar(64) NOT NULL COMMENT '权限名称',
   `code` varchar(64) NOT NULL COMMENT '权限编码',
   `description` varchar(255) DEFAULT NULL COMMENT '权限描述',
+  `module` varchar(64) NOT NULL COMMENT '模块名称',
   `type` tinyint NOT NULL COMMENT '权限类型(1:菜单,2:按钮,3:API)',
   `parent_id` bigint DEFAULT NULL COMMENT '父权限ID',
   `path` varchar(255) DEFAULT NULL COMMENT '权限路径',
@@ -83,22 +84,22 @@ INSERT INTO `role` (`name`, `code`, `description`, `status`) VALUES
 ('普通用户', 'ROLE_USER', '普通用户，拥有基本权限', 1);
 
 -- 添加基本权限
-INSERT INTO `permission` (`name`, `code`, `description`, `type`, `status`) VALUES
-('用户管理', 'USER_MANAGE', '用户管理权限', 1, 1),
-('用户查看', 'USER_VIEW', '查看用户信息权限', 2, 1),
-('用户添加', 'USER_ADD', '添加用户权限', 2, 1),
-('用户编辑', 'USER_EDIT', '编辑用户信息权限', 2, 1),
-('用户删除', 'USER_DELETE', '删除用户权限', 2, 1),
-('角色管理', 'ROLE_MANAGE', '角色管理权限', 1, 1),
-('角色查看', 'ROLE_VIEW', '查看角色信息权限', 2, 1),
-('角色添加', 'ROLE_ADD', '添加角色权限', 2, 1),
-('角色编辑', 'ROLE_EDIT', '编辑角色信息权限', 2, 1),
-('角色删除', 'ROLE_DELETE', '删除角色权限', 2, 1),
-('权限管理', 'PERMISSION_MANAGE', '权限管理权限', 1, 1),
-('权限查看', 'PERMISSION_VIEW', '查看权限信息权限', 2, 1),
-('权限添加', 'PERMISSION_ADD', '添加权限权限', 2, 1),
-('权限编辑', 'PERMISSION_EDIT', '编辑权限信息权限', 2, 1),
-('权限删除', 'PERMISSION_DELETE', '删除权限权限', 2, 1);
+INSERT INTO `permission` (`name`, `code`, `description`, `type`, `module`, `status`) VALUES
+('用户管理', 'USER_MANAGE', '用户管理权限', 1, '用户管理', 1),
+('用户查看', 'USER_VIEW', '查看用户信息权限', 2, '用户管理', 1),
+('用户添加', 'USER_ADD', '添加用户权限', 2, '用户管理', 1),
+('用户编辑', 'USER_EDIT', '编辑用户信息权限', 2, '用户管理', 1),
+('用户删除', 'USER_DELETE', '删除用户权限', 2, '用户管理', 1),
+('角色管理', 'ROLE_MANAGE', '角色管理权限', 1, '权限管理', 1),
+('角色查看', 'ROLE_VIEW', '查看角色信息权限', 2, '权限管理', 1),
+('角色添加', 'ROLE_ADD', '添加角色权限', 2, '权限管理', 1),
+('角色编辑', 'ROLE_EDIT', '编辑角色信息权限', 2, '权限管理', 1),
+('角色删除', 'ROLE_DELETE', '删除角色权限', 2, '权限管理', 1),
+('权限管理', 'PERMISSION_MANAGE', '权限管理权限', 1, '权限管理', 1),
+('权限查看', 'PERMISSION_VIEW', '查看权限信息权限', 2, '权限管理', 1),
+('权限添加', 'PERMISSION_ADD', '添加权限权限', 2, '权限管理', 1),
+('权限编辑', 'PERMISSION_EDIT', '编辑权限信息权限', 2, '权限管理', 1),
+('权限删除', 'PERMISSION_DELETE', '删除权限权限', 2, '权限管理', 1);
 
 -- 分配用户角色
 INSERT INTO `user_role` (`user_id`, `role_id`) VALUES

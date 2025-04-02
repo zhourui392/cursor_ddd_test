@@ -40,12 +40,6 @@ const routes = [
         meta: { title: '权限管理', icon: 'Key', permission: 'PERMISSION_VIEW' }
       },
       {
-        path: 'menu',
-        name: 'Menu',
-        component: () => import('../views/menu/MenuList.vue'),
-        meta: { title: '菜单管理', icon: 'Menu', permission: 'MENU_VIEW' }
-      },
-      {
         path: 'profile',
         name: 'Profile',
         component: () => import('../views/Profile.vue'),
