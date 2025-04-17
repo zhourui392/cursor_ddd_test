@@ -134,3 +134,14 @@ docker-compose.override.yml
 # 杂项
 .flattened-pom.xml
 HELP.md 
+
+# Next.js (in nextjs-frontend/)
+nextjs-frontend/.next/
+nextjs-frontend/out/
+nextjs-frontend/node_modules/
+nextjs-frontend/.env*.local
+nextjs-frontend/npm-debug.log*
+nextjs-frontend/yarn-debug.log*
+nextjs-frontend/yarn-error.log*
+nextjs-frontend/pnpm-debug.log*
+nextjs-frontend/.DS_Store
