@@ -20,7 +20,7 @@ public class AdminPasswordSimpleTest {
     @DisplayName("验证admin用户密码是否为123456")
     public void testAdminPassword() {
         // 数据库中存储的admin用户密码哈希值
-        String storedPasswordHash = "$2a$10$uxN9VpNQF4abH1W5fR41K.0xdsgEOZO2eLGy4KPUgm8/QWrSNT656";
+        String storedPasswordHash = "$2a$12$fsdyyZAzWd1waqAMHn14oeTWrwkpzgo8M2VXKwbtTfX9wUoVg/4OK";
         
         // 创建BCryptPasswordEncoder实例
         PasswordEncoder encoder = new BCryptPasswordEncoder();

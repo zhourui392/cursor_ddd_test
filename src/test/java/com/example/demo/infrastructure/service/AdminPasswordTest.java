@@ -25,13 +25,13 @@ public class AdminPasswordTest {
      * 测试admin用户的密码是否为123456
      * 
      * 数据库中存储的admin用户密码哈希值为：
-     * $2a$10$uxN9VpNQF4abH1W5fR41K.0xdsgEOZO2eLGy4KPUgm8/QWrSNT656
+     * $2a$12$fsdyyZAzWd1waqAMHn14oeTWrwkpzgo8M2VXKwbtTfX9wUoVg/4OK
      */
     @Test
     @DisplayName("验证admin用户密码是否为123456")
     public void testAdminPassword() {
         // 数据库中存储的admin用户密码哈希值
-        String storedPasswordHash = "$2a$10$uxN9VpNQF4abH1W5fR41K.0xdsgEOZO2eLGy4KPUgm8/QWrSNT656";
+        String storedPasswordHash = "$2a$12$fsdyyZAzWd1waqAMHn14oeTWrwkpzgo8M2VXKwbtTfX9wUoVg/4OK";
         
         // 使用密码服务验证密码
         boolean matches = passwordService.matches("123456", storedPasswordHash);
@@ -48,7 +48,7 @@ public class AdminPasswordTest {
     @DisplayName("使用BCryptPasswordEncoder直接验证admin密码")
     public void testAdminPasswordWithBCrypt() {
         // 数据库中存储的admin用户密码哈希值
-        String storedPasswordHash = "$2a$10$uxN9VpNQF4abH1W5fR41K.0xdsgEOZO2eLGy4KPUgm8/QWrSNT656";
+        String storedPasswordHash = "$2a$12$fsdyyZAzWd1waqAMHn14oeTWrwkpzgo8M2VXKwbtTfX9wUoVg/4OK";
         
         // 创建BCryptPasswordEncoder实例
         PasswordEncoder encoder = new BCryptPasswordEncoder();

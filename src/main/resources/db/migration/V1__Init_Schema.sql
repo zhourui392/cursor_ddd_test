@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `role_permission` (
 -- 添加初始数据
 -- 添加管理员用户（密码为：123456，使用BCrypt加密）
 INSERT INTO `user` (`username`, `password`, `nickname`, `email`, `status`) VALUES
-('admin', '$2a$10$uxN9VpNQF4abH1W5fR41K.0xdsgEOZO2eLGy4KPUgm8/QWrSNT656', '系统管理员', 'admin@example.com', 1);
+('admin', '$2a$12$fsdyyZAzWd1waqAMHn14oeTWrwkpzgo8M2VXKwbtTfX9wUoVg/4OK', '系统管理员', 'admin@example.com', 1);
 
 -- 添加角色
 INSERT INTO `role` (`name`, `code`, `description`, `status`) VALUES
